@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: dev-poc-appset
+  namespace: argocd
+spec: 
+  generators:
+    - list:
+        elements:
+          - appName: appset-first
+            namespace: argocd
+            directory: appset
+            project: appset-poc
+          - appName: appset-second
+            namespace: argocd
+            directory: appset
+            project: appset-poc-new
+  template:
+    metadata:
+      name: "{{appName}}"
+      annotations:
+        argocd.argoproj.io/manifest-generate-path: ".;.."
+      spec:
+        project: argocd
+        source:
+          repoURL: 
+          targetRevision: main
+          plugin:
+            name: argocd-vault-plugin-kustomize
+          path: "envs/dev/project/{{project}}/{{directory}}"
+        destination:
+          server: 
+          namespace: "{{namespace}}"
+        syncPolicy:
+          syncOptions:
+            - CreateNamespace=true
+            - ApplyOutOfSyncOnly=true
+            - PruneLast=true
